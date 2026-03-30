@@ -53,10 +53,10 @@ export const HeroSection = () => {
     setResult(null);
 
     const formData = new FormData();
-    formData.append("image", selectedFile);
+    formData.append("file", selectedFile);
 
     try {
-      const res = await fetch("http://127.0.0.1:5000/upload-image", {
+      const res = await fetch("http://127.0.0.1:8000/predict", {
         method: "POST",
         body: formData,
       });
@@ -187,12 +187,14 @@ export const HeroSection = () => {
         <div id="result" ref={resultSectionRef}>
           <ResultsCard
             imageUrl={URL.createObjectURL(selectedFile)}
-            decision={result.decision}
-            confidence={result.confidence}
-            risk={result.risk_score}
-            cdr = {result.cdr_value}
-            explanation={result.explanation}
-            filename={result.filename}
+            prediction={result.prediction}
+            //confidence={result.confidence}
+            //risk={result.risk_score}
+            cdr = {result.cdr}
+            //explanation={result.explanation}
+            filename={result.filename || 'default'}
+            vessel_risk = {result.vessel_risk}
+            gradcam = {result.gradcam}
           />
         </div>
       )}

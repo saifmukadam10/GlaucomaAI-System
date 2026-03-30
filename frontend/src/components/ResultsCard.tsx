@@ -2,55 +2,33 @@ import { Card, CardContent } from "@/components/ui/card";
 
 interface ResultsCardProps {
   imageUrl: string;
-  decision: string; // "Normal", "Suspicious", or "Glaucoma"
-  confidence: string; // "High" or "Moderate"
-  risk: number;
+  //decision: string; // "Normal", "Suspicious", or "Glaucoma"
+  //confidence: string; // "High" or "Moderate"
+  //risk: number;
   cdr: number;
-  explanation: string;
+  //explanation: string;
   filename: string;
+  prediction : number;
+  vessel_risk : number;
+  gradcam : string;
 }
 
 export const ResultsCard = ({
   imageUrl,
-  decision,
-  confidence,
-  risk,
+  //decision,
+  //confidence,
+  //risk,
   cdr,
-  explanation,
+  //explanation,
   filename,
+  prediction,
+  vessel_risk,
+  gradcam
 }: ResultsCardProps) => {
   // --- Determine status tone based on decision ---
   let status = "";
   let statusColor = "";
   let userMessage = "";
-
-  switch (decision) {
-    case "Normal":
-      status = "✅ No Glaucoma Detected";
-      statusColor = "text-green-500";
-      userMessage =
-        "AI analysis suggests a healthy optic nerve pattern. Regular eye check-ups are still recommended for overall eye health.";
-      break;
-
-    case "Suspicious":
-      status = "🟡 Suspicious — Needs Monitoring";
-      statusColor = "text-yellow-400";
-      userMessage =
-        "Some optic nerve features appear atypical. It's advisable to monitor regularly or consult an eye specialist for a preventive check-up.";
-      break;
-
-    case "Glaucoma":
-      status = "🔴 Possible Glaucoma Indicators";
-      statusColor = "text-red-500";
-      userMessage =
-        "AI system detected optic nerve changes consistent with glaucoma. Please consult an ophthalmologist for a detailed evaluation.";
-      break;
-
-    default:
-      status = "⚪ Awaiting Analysis";
-      statusColor = "text-gray-400";
-      userMessage = "Upload an image to view the analysis result.";
-  }
 
   return (
     <section id="result" className="container py-16">
@@ -72,33 +50,13 @@ export const ResultsCard = ({
                 {/* File info */}
                 <p className="text-sm text-gray-400 italic">File: {filename}</p>
 
-                {/* Confidence */}
+                {/* Prediction */}
                 <p className="text-lg font-medium">
-                  Confidence:{" "}
+                  Prediction:{" "}
                   <span
-                    className={`${confidence === "High"
-                        ? "text-green-600"
-                        : confidence === "Moderate"
-                          ? "text-yellow-500"
-                          : "text-gray-500"
-                      } font-semibold transition-colors`}
+                    className={"text-green-500"}
                   >
-                    {confidence}
-                  </span>
-                </p>
-
-                {/* Risk */}
-                <p className="text-lg font-medium">
-                  Risk Score:{" "}
-                  <span
-                    className={`${risk < 0.3
-                        ? "text-green-500"
-                        : risk < 0.7
-                          ? "text-yellow-400"
-                          : "text-red-500"
-                      } font-semibold transition-colors`}
-                  >
-                    {(risk * 100).toFixed(1)}%
+                    {prediction}
                   </span>
                 </p>
 
@@ -113,19 +71,25 @@ export const ResultsCard = ({
                           : "text-red-500"
                       } font-semibold transition-colors`}
                   >
-                    {cdr.toFixed(2)}
+                    {cdr}
+                  </span>
+                </p>
+                {/* Vessel Risk */}
+                <p className="text-lg font-medium">
+                  Vessel Risk:{" "}
+                  <span
+                    className={"text-green-500"}
+                  >
+                    {vessel_risk}
                   </span>
                 </p>
 
-                {/* Explanation */}
-                <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-4 mt-2">
-                  <h4 className="text-white font-semibold mb-1">
-                    🧠 Model Explanation
-                  </h4>
-                  <p className="text-gray-300 text-sm leading-relaxed">
-                    {explanation}
-                  </p>
-                </div>
+                <img
+                  src={`data:image/png;base64,${gradcam}`}
+                  alt="GradCAM Heatmap"
+                  style={{ marginTop: "10px", borderRadius: "10px" }}
+                  width="300"
+                  />
 
                 {/* User message */}
                 <div className="mt-3">

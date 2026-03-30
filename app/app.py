@@ -2,6 +2,7 @@ from fastapi import FastAPI, UploadFile
 import cv2
 import numpy as np
 import base64
+from fastapi.middleware.cors import CORSMiddleware
 
 from inference.pipeline import run_pipeline
 from explainability.gradcam import generate_gradcam
@@ -9,6 +10,19 @@ from llm.ollama_service import ask_llm
 
 app = FastAPI(title="Glaucoma AI System")
 
+# ✅ CORS CONFIG
+origins = [
+    "http://localhost:8080",   
+    "http://127.0.0.1:3000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,        # or ["*"] for all (not recommended for prod)
+    allow_credentials=True,
+    allow_methods=["*"],          # GET, POST, etc.
+    allow_headers=["*"],          # allow all headers
+)
 
 # 🔥 Helper: Convert image → base64 string
 def encode_image(image_array):
