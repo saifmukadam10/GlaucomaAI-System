@@ -44,9 +44,13 @@ async def predict(file: UploadFile):
     result = run_pipeline(image)
 
     heatmap = generate_gradcam(image)
+    
+    heatmap = (heatmap * 255).astype(np.uint8)
+    heatmap_color = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
 
-    # 🔥 Encode heatmap for JSON response
-    heatmap_encoded = encode_image(heatmap)
+    overlay = cv2.addWeighted(image, 0.6, heatmap_color, 0.4, 0)
+
+    heatmap_encoded = encode_image(overlay)
 
     return {
         "prediction": result["prediction"],

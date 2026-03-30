@@ -2,123 +2,149 @@ import { Card, CardContent } from "@/components/ui/card";
 
 interface ResultsCardProps {
   imageUrl: string;
-  //decision: string; // "Normal", "Suspicious", or "Glaucoma"
-  //confidence: string; // "High" or "Moderate"
-  //risk: number;
   cdr: number;
-  //explanation: string;
   filename: string;
-  prediction : number;
-  vessel_risk : number;
-  gradcam : string;
+  prediction: number;
+  vessel_risk: number;
+  gradcam: string;
 }
 
 export const ResultsCard = ({
   imageUrl,
-  //decision,
-  //confidence,
-  //risk,
   cdr,
-  //explanation,
   filename,
   prediction,
   vessel_risk,
   gradcam
 }: ResultsCardProps) => {
-  // --- Determine status tone based on decision ---
-  let status = "";
-  let statusColor = "";
-  let userMessage = "";
+
+  // ✅ Prediction → Human readable
+  const isGlaucoma = prediction === 1;
+  const status = isGlaucoma ? "Glaucoma Detected" : "Normal Eye";
+
+  const statusColor = isGlaucoma
+    ? "text-red-500"
+    : "text-green-500";
+
+  // ✅ CDR Interpretation
+  const interpretCDR = (cdr: number) => {
+    if (cdr < 0.4) return { text: "Normal", color: "text-green-500" };
+    if (cdr < 0.6) return { text: "Borderline", color: "text-yellow-400" };
+    return { text: "High (Possible Glaucoma)", color: "text-red-500" };
+  };
+
+  const cdrInfo = interpretCDR(cdr);
+
+  // ✅ Vessel Risk
+  const vesselRiskText = vessel_risk === 1 ? "High Risk" : "Low Risk";
+  const vesselColor = vessel_risk === 1 ? "text-red-500" : "text-green-500";
+
+  // ✅ User-friendly message
+  const userMessage = isGlaucoma
+    ? "⚠️ Signs of glaucoma detected. Please consult an eye specialist."
+    : "✅ No significant signs of glaucoma detected.";
+
+  // ✅ Recommendation
+  const recommendation = isGlaucoma
+    ? "Consult an ophthalmologist for further evaluation."
+    : "Maintain regular eye check-ups for continued eye health.";
 
   return (
     <section id="result" className="container py-16">
       <Card className="bg-card border-border shadow-medical">
         <CardContent className="p-8">
-          <div className="grid md:grid-cols-2 gap-8 items-center">
-            {/* --- Left side: Result details --- */}
-            <div className="space-y-4">
-              <p className="text-muted text-2xl font-bold uppercase tracking-wide text-white">
-                Results
+          <div className="grid md:grid-cols-2 gap-10 items-start">
+
+            {/* --- LEFT: REPORT --- */}
+            <div className="space-y-6">
+
+              <h2 className="text-3xl font-bold text-white">
+                AI Analysis Report
+              </h2>
+
+              {/* Status */}
+              <div>
+                <p className="text-gray-400 text-sm">Diagnosis</p>
+                <h3 className={`text-2xl font-bold ${statusColor}`}>
+                  {status}
+                </h3>
+              </div>
+
+              {/* File */}
+              <p className="text-sm text-gray-500 italic">
+                File: {filename}
               </p>
 
+              {/* Metrics */}
               <div className="space-y-3">
-                {/* Status */}
-                <h3 className="text-2xl font-bold">
-                  Status: <span className={`${statusColor}`}>{status}</span>
-                </h3>
 
-                {/* File info */}
-                <p className="text-sm text-gray-400 italic">File: {filename}</p>
+                <div>
+                  <p className="text-gray-400 text-sm">CDR (Cup-to-Disc Ratio)</p>
+                  <p className="text-lg font-semibold">
+                    {cdr.toFixed(2)} —{" "}
+                    <span className={cdrInfo.color}>{cdrInfo.text}</span>
+                  </p>
+                </div>
 
-                {/* Prediction */}
-                <p className="text-lg font-medium">
-                  Prediction:{" "}
-                  <span
-                    className={"text-green-500"}
-                  >
-                    {prediction}
-                  </span>
+                <div>
+                  <p className="text-gray-400 text-sm">Vessel Risk</p>
+                  <p className={`text-lg font-semibold ${vesselColor}`}>
+                    {vesselRiskText}
+                  </p>
+                </div>
+
+              </div>
+
+              {/* User Message */}
+              <div className="bg-gray-800/40 p-4 rounded-lg">
+                <p className={`font-medium ${statusColor}`}>
+                  {userMessage}
                 </p>
+              </div>
 
-                {/* CDR */}
-                <p className="text-lg font-medium">
-                  CDR:{" "}
-                  <span
-                    className={`${cdr < 0.6
-                        ? "text-green-500"
-                        : cdr < 0.7
-                          ? "text-yellow-400"
-                          : "text-red-500"
-                      } font-semibold transition-colors`}
-                  >
-                    {cdr}
-                  </span>
+              {/* Recommendation */}
+              <div className="bg-blue-900/30 p-4 rounded-lg border border-blue-700">
+                <p className="text-blue-300 font-medium">
+                  📌 Recommendation: {recommendation}
                 </p>
-                {/* Vessel Risk */}
-                <p className="text-lg font-medium">
-                  Vessel Risk:{" "}
-                  <span
-                    className={"text-green-500"}
-                  >
-                    {vessel_risk}
-                  </span>
+              </div>
+
+              {/* GradCAM */}
+              <div>
+                <p className="text-gray-400 text-sm mb-2">
+                  AI Attention Map (Grad-CAM)
                 </p>
 
                 <img
                   src={`data:image/png;base64,${gradcam}`}
                   alt="GradCAM Heatmap"
-                  style={{ marginTop: "10px", borderRadius: "10px" }}
-                  width="300"
-                  />
+                  className="rounded-lg border border-gray-700 w-full max-w-sm"
+                />
 
-                {/* User message */}
-                <div className="mt-3">
-                  <p className={`${statusColor} font-medium`}>{userMessage}</p>
-                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  Red/yellow regions indicate areas the AI focused on while making the decision.
+                </p>
+              </div>
 
-                {/* AI Insight */}
-                <div className="bg-gray-800/40 rounded-lg p-4 mt-4">
-                  <h4 className="text-white font-semibold mb-2">
-                    🔍 AI Insight
-                  </h4>
-                  <p className="text-gray-300 text-sm leading-relaxed">
-                    This result was generated using a deep learning pipeline
-                    combining{" "}
-                    <span className="font-semibold text-blue-400">ResNet</span>{" "}
-                    (for disease classification),{" "}
-                    <span className="font-semibold text-blue-400">YOLO</span>{" "}
-                    (for optic disc localization), and{" "}
-                    <span className="font-semibold text-blue-400">UNet</span>{" "}
-                    (for vessel segmentation). These models collectively analyze
-                    optic nerve patterns to assist in early glaucoma screening.
-                  </p>
-                </div>
+              {/* AI Insight */}
+              <div className="bg-gray-800/40 rounded-lg p-4">
+                <h4 className="text-white font-semibold mb-2">
+                  🔍 AI Insight
+                </h4>
+                <p className="text-gray-300 text-sm leading-relaxed">
+                  This analysis uses deep learning models including{" "}
+                  <span className="text-blue-400 font-semibold">ResNet</span>,{" "}
+                  <span className="text-blue-400 font-semibold">RCNN</span>, and{" "}
+                  <span className="text-blue-400 font-semibold">UNet</span> to evaluate optic nerve structure and vessel patterns for early glaucoma detection.
+                </p>
               </div>
             </div>
 
-            {/* --- Right side: Uploaded Image --- */}
-            <div className="relative">
-              <div className="aspect-video rounded-xl overflow-hidden bg-gradient-subtle border border-gray-700">
+            {/* --- RIGHT: ORIGINAL IMAGE --- */}
+            <div className="space-y-4">
+              <p className="text-gray-400 text-sm">Uploaded Image</p>
+
+              <div className="aspect-video rounded-xl overflow-hidden border border-gray-700">
                 <img
                   src={imageUrl}
                   alt="Uploaded retinal image"
@@ -126,6 +152,7 @@ export const ResultsCard = ({
                 />
               </div>
             </div>
+
           </div>
         </CardContent>
       </Card>

@@ -192,7 +192,7 @@ export const HeroSection = () => {
             //risk={result.risk_score}
             cdr = {result.cdr}
             //explanation={result.explanation}
-            filename={result.filename || 'default'}
+            filename={selectedFile.name}
             vessel_risk = {result.vessel_risk}
             gradcam = {result.gradcam}
           />
