@@ -62,6 +62,8 @@ export const HeroSection = () => {
       });
       const data = await res.json();
       setResult(data); // now stores full result JSON
+      console.log("disc" + data.disc_box)
+      console.log('cup' + data.cup_box)
     } catch (err) {
       console.error("Error uploading image:", err);
     } finally {
@@ -194,6 +196,10 @@ export const HeroSection = () => {
             //explanation={result.explanation}
             filename={selectedFile.name}
             vessel_risk = {result.vessel_risk}
+            disc_box={result.disc_box}
+            cup_box={result.cup_box}
+            image_width={result.image_width}
+            image_height={result.image_height}
             gradcam = {result.gradcam}
           />
         </div>

@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 
 interface ResultsCardProps {
@@ -7,6 +8,10 @@ interface ResultsCardProps {
   prediction: number;
   vessel_risk: number;
   gradcam: string;
+  disc_box?: number[];
+  cup_box?: number[];
+  image_width?: number;
+  image_height?: number;
 }
 
 export const ResultsCard = ({
@@ -15,8 +20,60 @@ export const ResultsCard = ({
   filename,
   prediction,
   vessel_risk,
-  gradcam
+  gradcam,
+  disc_box,
+  cup_box,
+  image_width,
+  image_height
 }: ResultsCardProps) => {
+  const imgRef = useRef<HTMLImageElement | null>(null);
+  const [renderedSize, setRenderedSize] = useState<{ w: number; h: number } | null>(null);
+
+  const updateRenderedSize = () => {
+    const img = imgRef.current;
+    if (!img) return;
+    setRenderedSize({ w: img.clientWidth, h: img.clientHeight });
+  };
+
+  useEffect(() => {
+    updateRenderedSize();
+    window.addEventListener("resize", updateRenderedSize);
+    return () => window.removeEventListener("resize", updateRenderedSize);
+    // imageUrl change should trigger a re-measure
+  }, [imageUrl, image_width, image_height]);
+
+  const scales = useMemo(() => {
+    if (!renderedSize || !image_width || !image_height) return null;
+    return {
+      scaleX: renderedSize.w / image_width,
+      scaleY: renderedSize.h / image_height,
+    };
+  }, [renderedSize, image_width, image_height]);
+
+  const boxToRectStyle = (
+  box?: number[],
+  color?: string
+): React.CSSProperties | null => {
+  if (!box || !scales) return null;
+  if (!Array.isArray(box) || box.length !== 4) return null;
+
+  const [x1, y1, x2, y2] = box;
+
+  const left = x1 * scales.scaleX;
+  const top = y1 * scales.scaleY;
+  const width = Math.max(2, (x2 - x1) * scales.scaleX);
+  const height = Math.max(2, (y2 - y1) * scales.scaleY);
+
+  return {
+    position: "absolute", // ✅ now correctly typed
+    left,
+    top,
+    width,
+    height,
+    border: `2px solid ${color ?? "#ffffff"}`,
+    boxSizing: "border-box",
+  };
+};
 
   // ✅ Prediction → Human readable
   const isGlaucoma = prediction === 1;
@@ -140,17 +197,53 @@ export const ResultsCard = ({
               </div>
             </div>
 
-            {/* --- RIGHT: ORIGINAL IMAGE --- */}
+            {/* --- RIGHT: ORIGINAL IMAGE + BOXES --- */}
             <div className="space-y-4">
-              <p className="text-gray-400 text-sm">Uploaded Image</p>
+              <p className="text-gray-400 text-sm">Uploaded Image (with Disc/Cup Boxes)</p>
 
-              <div className="aspect-video rounded-xl overflow-hidden border border-gray-700">
+              <div className="relative w-full rounded-xl overflow-hidden border border-gray-700 bg-black">
                 <img
+                  ref={imgRef}
                   src={imageUrl}
                   alt="Uploaded retinal image"
-                  className="w-full h-full object-cover"
+                  className="block w-full h-auto"
+                  onLoad={updateRenderedSize}
                 />
+
+                {/* Draw disc/cup boxes on top of the original fundus image */}
+                <div className="pointer-events-none absolute inset-0">
+                  {(() => {
+                    const discStyle = boxToRectStyle(disc_box, "rgba(255, 0, 0, 0.95)");
+                    const cupStyle = boxToRectStyle(cup_box, "rgba(0, 255, 0, 0.95)");
+
+                    return (
+                      <>
+                        {discStyle && (
+                          <div style={discStyle}>
+                            <span className="absolute -top-2 left-1 bg-red-600 text-white text-[10px] px-1 rounded">
+                              Disc
+                            </span>
+                          </div>
+                        )}
+                        {cupStyle && (
+                          <div style={cupStyle}>
+                            <span className="absolute -top-2 left-1 bg-green-600 text-white text-[10px] px-1 rounded">
+                              Cup
+                            </span>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
               </div>
+
+              {(disc_box?.length === 4 || cup_box?.length === 4) && (
+                <p className="text-xs text-gray-500 break-all">
+                  Disc box: {disc_box?.map((n) => Math.round(n)).join(", ") ?? "-"} | Cup box:{" "}
+                  {cup_box?.map((n) => Math.round(n)).join(", ") ?? "-"}
+                </p>
+              )}
             </div>
 
           </div>

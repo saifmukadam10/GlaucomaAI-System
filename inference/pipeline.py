@@ -5,6 +5,8 @@ from inference.feature_builder import build_feature_vector
 
 
 def run_pipeline(image):
+    # image is expected to be a numpy array from OpenCV (H, W, 3)
+    img_height, img_width = image.shape[:2]
 
     deep_features = models.resnet.extract_features(image)
 
@@ -23,5 +25,11 @@ def run_pipeline(image):
     return {
         "prediction": prediction.tolist(),
         "cdr": float(cdr),
-        "vessel_risk": float(vessel_risk)
+        "vessel_risk": float(vessel_risk),
+        # Box format assumed to be [x1, y1, x2, y2] in the same pixel space
+        # as the input image (RCNN preprocessing does not resize).
+        "disc_box": disc_box.tolist() if hasattr(disc_box, "tolist") else disc_box,
+        "cup_box": cup_box.tolist() if hasattr(cup_box, "tolist") else cup_box,
+        "image_width": int(img_width),
+        "image_height": int(img_height),
     }
