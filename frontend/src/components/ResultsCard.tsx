@@ -5,11 +5,12 @@ interface ResultsCardProps {
   imageUrl: string;
   cdr: number;
   filename: string;
-  prediction: number;
+  prediction: number | number[];
   vessel_risk: number;
   gradcam: string;
   disc_box?: number[];
   cup_box?: number[];
+  detections?: { label?: string; box?: number[]; score?: number }[];
   image_width?: number;
   image_height?: number;
 }
@@ -23,6 +24,7 @@ export const ResultsCard = ({
   gradcam,
   disc_box,
   cup_box,
+  detections,
   image_width,
   image_height
 }: ResultsCardProps) => {
@@ -75,8 +77,21 @@ export const ResultsCard = ({
   };
 };
 
+  const normalizedPrediction = Array.isArray(prediction) ? prediction[0] : prediction;
+
+  const normalizedBoxes = useMemo(() => {
+    const fromDetections = Array.isArray(detections) ? detections : [];
+    const discFromDetections = fromDetections.find((d) => d?.label === "disc" && Array.isArray(d.box) && d.box.length === 4)?.box;
+    const cupFromDetections = fromDetections.find((d) => d?.label === "cup" && Array.isArray(d.box) && d.box.length === 4)?.box;
+
+    return {
+      disc: discFromDetections ?? disc_box,
+      cup: cupFromDetections ?? cup_box,
+    };
+  }, [detections, disc_box, cup_box]);
+
   // ✅ Prediction → Human readable
-  const isGlaucoma = prediction === 1;
+  const isGlaucoma = normalizedPrediction === 1;
   const status = isGlaucoma ? "Glaucoma Detected" : "Normal Eye";
 
   const statusColor = isGlaucoma
@@ -213,8 +228,8 @@ export const ResultsCard = ({
                 {/* Draw disc/cup boxes on top of the original fundus image */}
                 <div className="pointer-events-none absolute inset-0">
                   {(() => {
-                    const discStyle = boxToRectStyle(disc_box, "rgba(255, 0, 0, 0.95)");
-                    const cupStyle = boxToRectStyle(cup_box, "rgba(0, 255, 0, 0.95)");
+                    const discStyle = boxToRectStyle(normalizedBoxes.disc, "rgba(255, 0, 0, 0.95)");
+                    const cupStyle = boxToRectStyle(normalizedBoxes.cup, "rgba(0, 255, 0, 0.95)");
 
                     return (
                       <>
@@ -238,10 +253,10 @@ export const ResultsCard = ({
                 </div>
               </div>
 
-              {(disc_box?.length === 4 || cup_box?.length === 4) && (
+              {(normalizedBoxes.disc?.length === 4 || normalizedBoxes.cup?.length === 4) && (
                 <p className="text-xs text-gray-500 break-all">
-                  Disc box: {disc_box?.map((n) => Math.round(n)).join(", ") ?? "-"} | Cup box:{" "}
-                  {cup_box?.map((n) => Math.round(n)).join(", ") ?? "-"}
+                  Disc box: {normalizedBoxes.disc?.map((n) => Math.round(n)).join(", ") ?? "-"} | Cup box:{" "}
+                  {normalizedBoxes.cup?.map((n) => Math.round(n)).join(", ") ?? "-"}
                 </p>
               )}
             </div>

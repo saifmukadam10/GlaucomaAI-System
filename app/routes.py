@@ -34,6 +34,7 @@ async def predict(file: UploadFile, patient_id: str):
         "vessel_risk": result["vessel_risk"],
         "disc_box": result["disc_box"],
         "cup_box": result["cup_box"],
+        "detections": result.get("detections", []),
         "image_width": int(result["image_width"]),
         "image_height": int(result["image_height"]),
         "gradcam": heatmap

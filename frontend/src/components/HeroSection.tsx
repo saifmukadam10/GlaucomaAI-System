@@ -198,6 +198,7 @@ export const HeroSection = () => {
             vessel_risk = {result.vessel_risk}
             disc_box={result.disc_box}
             cup_box={result.cup_box}
+            detections={result.detections}
             image_width={result.image_width}
             image_height={result.image_height}
             gradcam = {result.gradcam}
