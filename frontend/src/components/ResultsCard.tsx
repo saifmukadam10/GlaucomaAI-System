@@ -127,122 +127,52 @@ export const ResultsCard = ({
     <section id="result" className="container py-16">
       <Card className="bg-card border-border shadow-medical">
         <CardContent className="p-8">
-          <div className="grid md:grid-cols-2 gap-10 items-start">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+            <div className="bg-gray-900/40 border border-gray-700 rounded-xl p-6 space-y-5">
+              <h2 className="text-3xl font-bold text-white">AI Analysis Report</h2>
 
-            {/* --- LEFT: REPORT --- */}
-            <div className="space-y-6">
-
-              <h2 className="text-3xl font-bold text-white">
-                AI Analysis Report
-              </h2>
-
-              {/* Status */}
               <div>
                 <p className="text-gray-400 text-sm">Diagnosis</p>
-                <h3 className={`text-2xl font-bold ${statusColor}`}>
-                  {status}
-                </h3>
+                <h3 className={`text-2xl font-bold ${statusColor}`}>{status}</h3>
               </div>
 
-              {/* File */}
-              <p className="text-sm text-gray-500 italic">
-                File: {filename}
-              </p>
+              <p className="text-sm text-gray-500 italic">File: {filename}</p>
 
-              {/* Metrics */}
               <div className="space-y-3">
-
                 <div>
                   <p className="text-gray-400 text-sm">CDR (Cup-to-Disc Ratio)</p>
                   <p className="text-lg font-semibold">
-                    {cdr.toFixed(2)} —{" "}
-                    <span className={cdrInfo.color}>{cdrInfo.text}</span>
+                    {cdr.toFixed(2)} — <span className={cdrInfo.color}>{cdrInfo.text}</span>
                   </p>
                 </div>
 
                 <div>
                   <p className="text-gray-400 text-sm">Vessel Risk</p>
-                  <p className={`text-lg font-semibold ${vesselColor}`}>
-                    {vesselRiskText}
-                  </p>
+                  <p className={`text-lg font-semibold ${vesselColor}`}>{vesselRiskText}</p>
                 </div>
-
               </div>
 
-              {/* User Message */}
               <div className="bg-gray-800/40 p-4 rounded-lg">
-                <p className={`font-medium ${statusColor}`}>
-                  {userMessage}
-                </p>
+                <p className={`font-medium ${statusColor}`}>{userMessage}</p>
               </div>
 
-              {/* Recommendation */}
               <div className="bg-blue-900/30 p-4 rounded-lg border border-blue-700">
-                <p className="text-blue-300 font-medium">
-                  📌 Recommendation: {recommendation}
-                </p>
-              </div>
-
-              {/* GradCAM */}
-              <div>
-                <p className="text-gray-400 text-sm mb-2">
-                  AI Attention Map (Grad-CAM)
-                </p>
-
-                <img
-                  src={`data:image/png;base64,${gradcam}`}
-                  alt="GradCAM Heatmap"
-                  className="rounded-lg border border-gray-700 w-full max-w-sm"
-                />
-
-                <p className="text-xs text-gray-500 mt-2">
-                  Red/yellow regions indicate areas the AI focused on while making the decision.
-                </p>
-              </div>
-
-              {/* Vessel Segmentation (UNet) */}
-              <div>
-                <p className="text-gray-400 text-sm mb-2">
-                  Vessel Segmentation (UNet)
-                </p>
-                <img
-                  src={`data:image/png;base64,${vessel_bw}`}
-                  alt="Vessel segmentation (black and white)"
-                  className="rounded-lg border border-gray-700 w-full max-w-sm"
-                />
-                <p className="text-xs text-gray-500 mt-2">
-                  White pixels represent detected vessels.
-                </p>
-              </div>
-
-              {/* AI Insight */}
-              <div className="bg-gray-800/40 rounded-lg p-4">
-                <h4 className="text-white font-semibold mb-2">
-                  🔍 AI Insight
-                </h4>
-                <p className="text-gray-300 text-sm leading-relaxed">
-                  This analysis uses deep learning models including{" "}
-                  <span className="text-blue-400 font-semibold">ResNet</span>,{" "}
-                  <span className="text-blue-400 font-semibold">RCNN</span>, and{" "}
-                  <span className="text-blue-400 font-semibold">UNet</span> to evaluate optic nerve structure and vessel patterns for early glaucoma detection.
-                </p>
+                <p className="text-blue-300 font-medium">Recommendation: {recommendation}</p>
               </div>
             </div>
 
-            {/* --- RIGHT: ORIGINAL IMAGE + BOXES --- */}
-            <div className="space-y-4">
-              <p className="text-gray-400 text-sm">Uploaded Image (with Disc/Cup Boxes)</p>
+            <div className="bg-gray-900/40 border border-gray-700 rounded-xl p-6 space-y-4">
+              <p className="text-gray-300 font-semibold">CDR Region (Disc/Cup Boxes)</p>
 
               <div className="relative w-full rounded-xl overflow-hidden border border-gray-700 bg-black">
                 <img
                   ref={imgRef}
                   src={imageUrl}
-                  alt="Uploaded retinal image"
+                  alt="Uploaded retinal image with disc and cup boxes"
                   className="block w-full h-auto"
                   onLoad={updateRenderedSize}
                 />
 
-                {/* Draw disc/cup boxes on top of the original fundus image */}
                 <div className="pointer-events-none absolute inset-0">
                   {(() => {
                     const discStyle = boxToRectStyle(normalizedBoxes.disc, "rgba(255, 0, 0, 0.95)");
@@ -270,14 +200,34 @@ export const ResultsCard = ({
                 </div>
               </div>
 
-              {(normalizedBoxes.disc?.length === 4 || normalizedBoxes.cup?.length === 4) && (
-                <p className="text-xs text-gray-500 break-all">
-                  Disc box: {normalizedBoxes.disc?.map((n) => Math.round(n)).join(", ") ?? "-"} | Cup box:{" "}
-                  {normalizedBoxes.cup?.map((n) => Math.round(n)).join(", ") ?? "-"}
-                </p>
-              )}
+              <p className="text-sm text-gray-300 leading-relaxed">
+                Disc and cup boxes are used to compute CDR. A larger cup relative to disc can indicate possible glaucomatous damage.
+              </p>
             </div>
 
+            <div className="bg-gray-900/40 border border-gray-700 rounded-xl p-6 space-y-4">
+              <p className="text-gray-300 font-semibold">Grad-CAM (Model Attention)</p>
+              <img
+                src={`data:image/png;base64,${gradcam}`}
+                alt="GradCAM heatmap"
+                className="rounded-lg border border-gray-700 w-full"
+              />
+              <p className="text-sm text-gray-300 leading-relaxed">
+                Warm colors (red/yellow) show where the model focused most for glaucoma prediction, often near the optic nerve head.
+              </p>
+            </div>
+
+            <div className="bg-gray-900/40 border border-gray-700 rounded-xl p-6 space-y-4">
+              <p className="text-gray-300 font-semibold">Vessel Segmentation</p>
+              <img
+                src={`data:image/png;base64,${vessel_bw}`}
+                alt="Vessel segmentation (black and white)"
+                className="rounded-lg border border-gray-700 w-full"
+              />
+              <p className="text-sm text-gray-300 leading-relaxed">
+                White regions are detected retinal vessels. Vessel thinning or irregular patterns can support glaucoma risk assessment.
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>

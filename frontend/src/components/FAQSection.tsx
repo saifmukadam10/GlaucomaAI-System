@@ -7,26 +7,35 @@ import {
 
 const faqs = [
   {
-    question: "What is Glaucoma?",
-    answer: "Glaucoma is a group of eye conditions that damage the optic nerve, often due to high eye pressure. It's a leading cause of blindness worldwide, but early detection and treatment can help preserve vision."
+    question: "What does “Glaucoma Detected” mean ?",
+    answer:
+      "It means the model found patterns in the fundus image that are associated with glaucoma risk (especially around the optic nerve head). It’s a screening signal, not a final diagnosis."
   },
   {
-    question: "How accurate is the AI?",
-    answer: "Our AI system achieves over 95% accuracy in detecting glaucoma risk indicators. However, this tool is designed to assist healthcare professionals and should not replace comprehensive eye examinations by qualified ophthalmologists."
+    question: "What is CDR (Cup-to-Disc Ratio) and why is it important?",
+    answer:
+      "CDR compares the optic cup size to the optic disc size. A higher CDR can indicate optic nerve cupping, which is commonly associated with glaucoma—especially if it’s high or asymmetric."
   },
   {
-    question: "Is my data secure?",
-    answer: "Yes, we use industry-standard encryption and security protocols. Your medical images are processed securely and are not stored permanently on our servers. All data handling complies with HIPAA regulations."
+    question: "What does the Grad-CAM heatmap show?",
+    answer:
+      "Grad-CAM highlights the image regions that most influenced the model’s prediction. Hotter colors usually indicate stronger influence, often near the optic disc when glaucoma-related features are present."
   },
   {
-    question: "What should I do if high risk is detected?",
-    answer: "If our analysis indicates high glaucoma risk, please schedule an appointment with an ophthalmologist immediately for comprehensive evaluation and potential treatment options."
+    question: "What does the vessel segmentation image mean?",
+    answer:
+      "It shows the retinal blood vessel map detected by the model. Vessel changes can be a supportive signal in risk assessment, but they should be interpreted together with clinical findings."
+  },
+  {
+    question: "What should I do after getting a high-risk result here?",
+    answer:
+      "Book a comprehensive eye exam with an ophthalmologist (IOP measurement, OCT/optic nerve evaluation, and visual field testing). Early follow-up is the safest next step."
   }
 ];
 
 export const FAQSection = () => {
   return (
-    <section id="faq" className="container py-20">
+    <section id="faq" className="container py-16 md:py-20">
       <div className="space-y-12 max-w-3xl mx-auto">
         <h2 className="text-3xl font-bold font-manrope text-center">FAQ</h2>
         

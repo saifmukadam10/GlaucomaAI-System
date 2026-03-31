@@ -106,7 +106,7 @@ export const HeroSection = () => {
   };
 
   return (
-    <section id="upload" className="container py-20 lg:py-24">
+    <section id="upload" className="container py-16 md:py-20 lg:py-24">
       <div className="grid lg:grid-cols-2 gap-12 items-center">
         <div className="space-y-8">
           <div className="space-y-6">
@@ -242,20 +242,20 @@ export const HeroSection = () => {
       )}
 
       {/* Glaucoma Q&A Section (always visible on homepage) */}
-      <section className="max-w-3xl mx-auto bg-gray-900/60 border border-gray-800 rounded-2xl p-6 mt-10">
+      <section className="max-w-5xl mx-auto bg-gray-900/60 border border-gray-800 rounded-2xl p-6 md:p-8 mt-10">
         <h3 className="text-2xl font-semibold text-white mb-2">
           Ask a Glaucoma Question
         </h3>
-        <p className="text-sm text-gray-400 mb-4">
+        <p className="text-base text-gray-300 mb-5 leading-relaxed">
           This assistant is specialized only in{" "}
           <span className="font-semibold text-primary">glaucoma-related</span> questions
           (risk factors, optic nerve, CDR, treatment options, follow-up, etc.). It does not
           replace consultation with an ophthalmologist.
         </p>
 
-        <div className="rounded-xl border border-gray-800 bg-gray-950/50 p-4 mb-4 max-h-[420px] overflow-y-auto space-y-4">
+        <div className="rounded-xl border border-gray-800 bg-gray-950/50 p-4 md:p-5 mb-5 max-h-[520px] overflow-y-auto space-y-4">
           {chatHistory.length === 0 ? (
-            <p className="text-sm text-gray-500">
+            <p className="text-base text-gray-400">
               Ask your first glaucoma question below.
             </p>
           ) : (
@@ -263,13 +263,13 @@ export const HeroSection = () => {
               <div key={`${item.question}-${index}`} className="space-y-2">
                 <div className="rounded-lg bg-gray-900 border border-gray-800 p-3">
                   <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">Prompt</p>
-                  <p className="text-sm text-gray-100 whitespace-pre-line">{item.question}</p>
+                  <p className="text-base text-gray-100 whitespace-pre-line">{item.question}</p>
                 </div>
                 <div className="rounded-lg bg-black/30 border border-primary/30 p-3">
                   <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">
                     LLM Response
                   </p>
-                  <p className="text-sm text-gray-100 whitespace-pre-line">{item.answer}</p>
+                  <p className="text-base text-gray-100 whitespace-pre-line">{item.answer}</p>
                 </div>
               </div>
             ))
@@ -281,14 +281,14 @@ export const HeroSection = () => {
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             rows={3}
-            className="w-full rounded-lg bg-gray-950 border border-gray-700 px-3 py-2 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full rounded-lg bg-gray-950 border border-gray-700 px-3 py-2 text-base text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary"
             placeholder="Example: What does a high cup-to-disc ratio mean in terms of glaucoma risk?"
           />
           <div className="flex items-center justify-between gap-3">
             <button
               onClick={handleAskQuestion}
               disabled={asking || !question.trim()}
-              className={`px-5 py-2 rounded-lg text-sm font-semibold ${
+              className={`px-5 py-2 rounded-lg text-base font-semibold ${
                 asking || !question.trim()
                   ? "bg-gray-700 text-gray-400 cursor-not-allowed"
                   : "bg-primary text-white hover:bg-primary/90"
