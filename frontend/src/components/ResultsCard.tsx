@@ -8,6 +8,7 @@ interface ResultsCardProps {
   prediction: number | number[];
   vessel_risk: number;
   gradcam: string;
+  vessel_bw: string;
   disc_box?: number[];
   cup_box?: number[];
   detections?: { label?: string; box?: number[]; score?: number }[];
@@ -22,6 +23,7 @@ export const ResultsCard = ({
   prediction,
   vessel_risk,
   gradcam,
+  vessel_bw,
   disc_box,
   cup_box,
   detections,
@@ -195,6 +197,21 @@ export const ResultsCard = ({
 
                 <p className="text-xs text-gray-500 mt-2">
                   Red/yellow regions indicate areas the AI focused on while making the decision.
+                </p>
+              </div>
+
+              {/* Vessel Segmentation (UNet) */}
+              <div>
+                <p className="text-gray-400 text-sm mb-2">
+                  Vessel Segmentation (UNet)
+                </p>
+                <img
+                  src={`data:image/png;base64,${vessel_bw}`}
+                  alt="Vessel segmentation (black and white)"
+                  className="rounded-lg border border-gray-700 w-full max-w-sm"
+                />
+                <p className="text-xs text-gray-500 mt-2">
+                  White pixels represent detected vessels.
                 </p>
               </div>
 

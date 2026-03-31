@@ -7,6 +7,10 @@ export const HeroSection = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [question, setQuestion] = useState("");
+  const [chatHistory, setChatHistory] = useState<{ question: string; answer: string }[]>([]);
+  const [asking, setAsking] = useState(false);
+  const [askError, setAskError] = useState<string | null>(null);
 
   const resultSectionRef = useRef<HTMLDivElement | null>(null);
 
@@ -68,6 +72,36 @@ export const HeroSection = () => {
       console.error("Error uploading image:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAskQuestion = async () => {
+    const trimmedQuestion = question.trim();
+    if (!trimmedQuestion) return;
+    setAsking(true);
+    setAskError(null);
+    try {
+      const res = await fetch("http://127.0.0.1:8000/ask", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ question: trimmedQuestion }),
+      });
+      if (!res.ok) {
+        throw new Error(`Request failed with status ${res.status}`);
+      }
+      const data = await res.json();
+      setChatHistory((prev) => [
+        ...prev,
+        { question: trimmedQuestion, answer: data.answer ?? "No response received." },
+      ]);
+      setQuestion("");
+    } catch (err) {
+      console.error("Error asking LLM:", err);
+      setAskError("Unable to get a response right now. Please try again.");
+    } finally {
+      setAsking(false);
     }
   };
 
@@ -186,25 +220,86 @@ export const HeroSection = () => {
 
       {/* Results Section */}
       {result && selectedFile && (
-        <div id="result" ref={resultSectionRef}>
+        <div id="result" ref={resultSectionRef} className="mt-10">
           <ResultsCard
             imageUrl={URL.createObjectURL(selectedFile)}
             prediction={result.prediction}
             //confidence={result.confidence}
             //risk={result.risk_score}
-            cdr = {result.cdr}
+            cdr={result.cdr}
             //explanation={result.explanation}
             filename={selectedFile.name}
-            vessel_risk = {result.vessel_risk}
+            vessel_risk={result.vessel_risk}
             disc_box={result.disc_box}
             cup_box={result.cup_box}
             detections={result.detections}
             image_width={result.image_width}
             image_height={result.image_height}
-            gradcam = {result.gradcam}
+            gradcam={result.gradcam}
+            vessel_bw={result.vessel_bw}
           />
         </div>
       )}
+
+      {/* Glaucoma Q&A Section (always visible on homepage) */}
+      <section className="max-w-3xl mx-auto bg-gray-900/60 border border-gray-800 rounded-2xl p-6 mt-10">
+        <h3 className="text-2xl font-semibold text-white mb-2">
+          Ask a Glaucoma Question
+        </h3>
+        <p className="text-sm text-gray-400 mb-4">
+          This assistant is specialized only in{" "}
+          <span className="font-semibold text-primary">glaucoma-related</span> questions
+          (risk factors, optic nerve, CDR, treatment options, follow-up, etc.). It does not
+          replace consultation with an ophthalmologist.
+        </p>
+
+        <div className="rounded-xl border border-gray-800 bg-gray-950/50 p-4 mb-4 max-h-[420px] overflow-y-auto space-y-4">
+          {chatHistory.length === 0 ? (
+            <p className="text-sm text-gray-500">
+              Ask your first glaucoma question below.
+            </p>
+          ) : (
+            chatHistory.map((item, index) => (
+              <div key={`${item.question}-${index}`} className="space-y-2">
+                <div className="rounded-lg bg-gray-900 border border-gray-800 p-3">
+                  <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">Prompt</p>
+                  <p className="text-sm text-gray-100 whitespace-pre-line">{item.question}</p>
+                </div>
+                <div className="rounded-lg bg-black/30 border border-primary/30 p-3">
+                  <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">
+                    LLM Response
+                  </p>
+                  <p className="text-sm text-gray-100 whitespace-pre-line">{item.answer}</p>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        <div className="space-y-3">
+          <textarea
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            rows={3}
+            className="w-full rounded-lg bg-gray-950 border border-gray-700 px-3 py-2 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary"
+            placeholder="Example: What does a high cup-to-disc ratio mean in terms of glaucoma risk?"
+          />
+          <div className="flex items-center justify-between gap-3">
+            <button
+              onClick={handleAskQuestion}
+              disabled={asking || !question.trim()}
+              className={`px-5 py-2 rounded-lg text-sm font-semibold ${
+                asking || !question.trim()
+                  ? "bg-gray-700 text-gray-400 cursor-not-allowed"
+                  : "bg-primary text-white hover:bg-primary/90"
+              }`}
+            >
+              {asking ? "Asking..." : "Ask Glaucoma Assistant"}
+            </button>
+            {askError && <span className="text-xs text-red-400">{askError}</span>}
+          </div>
+        </div>
+      </section>
     </section>
   );
 };

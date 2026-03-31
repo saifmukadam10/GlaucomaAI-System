@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from inference.pipeline import run_pipeline
 from explainability.gradcam import generate_gradcam
 from llm.ollama_service import ask_llm
+from app.schemas import QuestionRequest, LLMResponse
 
 app = FastAPI(title="Glaucoma AI System")
 
@@ -43,6 +44,17 @@ async def predict(file: UploadFile):
 
     result = run_pipeline(image)
 
+    # UNet vessel mask -> base64 black/white PNG for the UI
+    vessel_bw_encoded = ""
+    vessel_mask = result.get("vessel_mask")
+    if vessel_mask is not None:
+        # Ensure uint8 so cv2.imencode renders correctly
+        vessel_bw = vessel_mask
+        if vessel_bw.dtype != np.uint8:
+            # If mask is 0..1, scale; otherwise just cast.
+            vessel_bw = (vessel_bw * 255).astype(np.uint8) if vessel_bw.max() <= 1 else vessel_bw.astype(np.uint8)
+        vessel_bw_encoded = encode_image(vessel_bw)
+
     heatmap = generate_gradcam(image)
     
     heatmap = (heatmap * 255).astype(np.uint8)
@@ -61,11 +73,16 @@ async def predict(file: UploadFile):
         "detections": result.get("detections", []),
         "image_width": int(result["image_width"]),
         "image_height": int(result["image_height"]),
-        "gradcam": heatmap_encoded   # ✅ now renderable
+        "gradcam": heatmap_encoded,   # ✅ now renderable
+        "vessel_bw": vessel_bw_encoded,  # ✅ now renderable
     }
 
 
-@app.post("/ask")
-def ask(question: str):
-    response = ask_llm(question)
-    return {"answer": response}
+@app.post("/ask", response_model=LLMResponse)
+async def ask(data: QuestionRequest):
+    """
+    Ask the glaucoma-specialized LLM a question.
+    Accepts a JSON body: { "question": "..." }.
+    """
+    answer = ask_llm(data.question)
+    return {"answer": answer}

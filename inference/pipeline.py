@@ -1,3 +1,4 @@
+import numpy as np
 from core.model_loader import models
 from utils.cdr_calculation import calculate_cdr
 from utils.vessel_density import vessel_density_score
@@ -20,8 +21,11 @@ def run_pipeline(image):
     cdr = calculate_cdr(disc_box, cup_box)
 
     vessel_mask = models.unet.segment(image)
-
-    vessel_risk = vessel_density_score(vessel_mask)
+    # Convert to a black-and-white mask for UI rendering:
+    # vessels = white (255), background = black (0)
+    #vessel_mask_bw = (vessel_mask > 0).astype(np.uint8) * 255
+    vessel_mask_bw = vessel_mask * 255
+    vessel_risk = vessel_density_score(vessel_mask_bw)
 
     features = build_feature_vector(deep_features, cdr, vessel_risk)
 
@@ -32,6 +36,7 @@ def run_pipeline(image):
         "prediction": prediction.tolist(),
         "cdr": float(cdr),
         "vessel_risk": float(vessel_risk),
+        "vessel_mask": vessel_mask_bw,  # numpy array (encoded later in the API layer)
         # Box format assumed to be [x1, y1, x2, y2] in the same pixel space
         # as the input image (RCNN preprocessing does not resize).
         "disc_box": disc_box.tolist() if hasattr(disc_box, "tolist") else disc_box,
