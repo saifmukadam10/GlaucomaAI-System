@@ -32,6 +32,7 @@ export const ResultsCard = ({
 }: ResultsCardProps) => {
   const imgRef = useRef<HTMLImageElement | null>(null);
   const [renderedSize, setRenderedSize] = useState<{ w: number; h: number } | null>(null);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
 
   const updateRenderedSize = () => {
     const img = imgRef.current;
@@ -122,6 +123,205 @@ export const ResultsCard = ({
   const recommendation = isGlaucoma
     ? "Consult an ophthalmologist for further evaluation."
     : "Maintain regular eye check-ups for continued eye health.";
+
+  const loadImage = (src: string) =>
+    new Promise<HTMLImageElement>((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error("Failed to load image for PDF export."));
+      img.src = src;
+    });
+
+  const createAnnotatedFundusDataUrl = async () => {
+    const sourceImg = await loadImage(imageUrl);
+    const canvas = document.createElement("canvas");
+    const width = sourceImg.naturalWidth || image_width || 1024;
+    const height = sourceImg.naturalHeight || image_height || 1024;
+    canvas.width = width;
+    canvas.height = height;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return sourceImg.src;
+
+    ctx.drawImage(sourceImg, 0, 0, width, height);
+
+    const drawBox = (box: number[] | undefined, color: string, label: string) => {
+      if (!box || box.length !== 4) return;
+      const [x1, y1, x2, y2] = box;
+      const boxW = Math.max(2, x2 - x1);
+      const boxH = Math.max(2, y2 - y1);
+      const lineW = Math.max(2, Math.round(width * 0.003));
+      const fontSize = Math.max(12, Math.round(width * 0.02));
+
+      ctx.strokeStyle = color;
+      ctx.lineWidth = lineW;
+      ctx.strokeRect(x1, y1, boxW, boxH);
+
+      ctx.font = `${fontSize}px Arial`;
+      const textW = ctx.measureText(label).width;
+      const labelPad = 6;
+      const labelW = textW + labelPad * 2;
+      const labelH = fontSize + labelPad;
+      const labelX = x1;
+      const labelY = Math.max(0, y1 - labelH);
+
+      ctx.fillStyle = color;
+      ctx.fillRect(labelX, labelY, labelW, labelH);
+      ctx.fillStyle = "#ffffff";
+      ctx.fillText(label, labelX + labelPad, labelY + fontSize);
+    };
+
+    drawBox(normalizedBoxes.disc, "#dc2626", "Disc");
+    drawBox(normalizedBoxes.cup, "#16a34a", "Cup");
+
+    return canvas.toDataURL("image/png");
+  };
+
+  const handleDownloadPdf = async () => {
+    if (downloadingPdf) return;
+    setDownloadingPdf(true);
+
+    try {
+      const { jsPDF } = await import("jspdf");
+      const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 12;
+      const contentWidth = pageWidth - margin * 2;
+      let y = margin;
+
+      const ensureSpace = (required: number) => {
+        if (y + required > pageHeight - margin) {
+          doc.addPage();
+          y = margin;
+        }
+      };
+
+      const addWrapped = (
+        text: string,
+        options?: {
+          fontSize?: number;
+          spacing?: number;
+          color?: [number, number, number];
+          fontStyle?: "normal" | "bold" | "italic";
+        }
+      ) => {
+        const fontSize = options?.fontSize ?? 11;
+        const spacing = options?.spacing ?? 5;
+        const color = options?.color ?? [31, 41, 55];
+        const fontStyle = options?.fontStyle ?? "normal";
+
+        doc.setFont("helvetica", fontStyle);
+        doc.setTextColor(color[0], color[1], color[2]);
+        doc.setFontSize(fontSize);
+        const lines = doc.splitTextToSize(text, contentWidth);
+        const required = lines.length * spacing + 1;
+        ensureSpace(required);
+        doc.text(lines, margin, y);
+        y += required;
+      };
+
+      const addImageBlock = async (
+        title: string,
+        imgSrc: string,
+        note: string
+      ) => {
+        ensureSpace(9);
+        doc.setFillColor(239, 246, 255);
+        doc.roundedRect(margin, y - 4.5, contentWidth, 8, 2, 2, "F");
+        addWrapped(title, { fontSize: 12, spacing: 5.5, color: [30, 64, 175], fontStyle: "bold" });
+        const img = await loadImage(imgSrc);
+        const ratio = img.naturalHeight / img.naturalWidth || 0.75;
+        const imgWidth = contentWidth;
+        const imgHeight = imgWidth * ratio;
+        ensureSpace(imgHeight + 8);
+        doc.addImage(imgSrc, "PNG", margin, y, imgWidth, imgHeight);
+        y += imgHeight + 4;
+        addWrapped(note, { fontSize: 10.5, spacing: 4.8, color: [71, 85, 105] });
+        y += 2;
+      };
+
+      const statusFill = isGlaucoma ? [254, 226, 226] : [220, 252, 231];
+      const statusText = isGlaucoma ? [153, 27, 27] : [22, 101, 52];
+      const statusBorder = isGlaucoma ? [239, 68, 68] : [34, 197, 94];
+
+      doc.setFillColor(15, 23, 42);
+      doc.roundedRect(margin, y, contentWidth, 16, 3, 3, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(18);
+      doc.text("Glaucoma AI Analysis Report", margin + 4, y + 7.5);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.setTextColor(191, 219, 254);
+      doc.text("Automated screening summary and visual evidence", margin + 4, y + 12.5);
+      y += 22;
+
+      ensureSpace(11);
+      doc.setFillColor(statusFill[0], statusFill[1], statusFill[2]);
+      doc.setDrawColor(statusBorder[0], statusBorder[1], statusBorder[2]);
+      doc.roundedRect(margin, y - 1.5, contentWidth, 9, 2, 2, "FD");
+      addWrapped(`Diagnosis: ${status}`, {
+        fontSize: 12,
+        spacing: 5.2,
+        color: [statusText[0], statusText[1], statusText[2]],
+        fontStyle: "bold",
+      });
+      y += 1;
+
+      addWrapped(`File: ${filename}`, { fontSize: 11, spacing: 5, color: [55, 65, 81] });
+      addWrapped(`CDR (Cup-to-Disc Ratio): ${cdr.toFixed(2)} (${cdrInfo.text})`, {
+        fontSize: 11,
+        spacing: 5,
+        color: [37, 99, 235],
+      });
+      addWrapped(`Vessel Risk: ${vesselRiskText}`, {
+        fontSize: 11,
+        spacing: 5,
+        color: vessel_risk === 1 ? [185, 28, 28] : [21, 128, 61],
+        fontStyle: "bold",
+      });
+      addWrapped(`Clinical Note: ${userMessage.replace(/[^\x00-\x7F]/g, "")}`, {
+        fontSize: 10.8,
+        spacing: 4.9,
+        color: [75, 85, 99],
+      });
+      addWrapped(`Recommendation: ${recommendation}`, {
+        fontSize: 10.8,
+        spacing: 4.9,
+        color: [30, 64, 175],
+        fontStyle: "italic",
+      });
+      y += 2;
+
+      const annotatedFundus = await createAnnotatedFundusDataUrl();
+      const gradcamData = `data:image/png;base64,${gradcam}`;
+      const vesselData = `data:image/png;base64,${vessel_bw}`;
+
+      await addImageBlock(
+        "1) Fundus Image with Disc/Cup Boxes",
+        annotatedFundus,
+        "Disc and cup boxes are used for cup-to-disc ratio estimation. A larger cup relative to disc may indicate glaucomatous optic nerve changes."
+      );
+      await addImageBlock(
+        "2) Grad-CAM Attention Map",
+        gradcamData,
+        "Warm regions show where the model focused while deciding glaucoma risk."
+      );
+      await addImageBlock(
+        "3) Vessel Segmentation Map",
+        vesselData,
+        "White regions represent segmented retinal vessels used as supportive structural features."
+      );
+
+      const safeName = filename.replace(/\.[^/.]+$/, "");
+      doc.save(`${safeName}_ai_result.pdf`);
+    } catch (error) {
+      console.error("PDF download failed:", error);
+    } finally {
+      setDownloadingPdf(false);
+    }
+  };
 
   return (
     <section id="result" className="container py-16">
@@ -228,6 +428,20 @@ export const ResultsCard = ({
                 White regions are detected retinal vessels. Vessel thinning or irregular patterns can support glaucoma risk assessment.
               </p>
             </div>
+          </div>
+
+          <div className="mt-8 flex justify-center">
+            <button
+              onClick={handleDownloadPdf}
+              disabled={downloadingPdf}
+              className={`px-6 py-3 rounded-lg font-semibold transition ${
+                downloadingPdf
+                  ? "bg-gray-700 text-gray-300 cursor-not-allowed"
+                  : "bg-primary text-white hover:bg-primary/90"
+              }`}
+            >
+              {downloadingPdf ? "Preparing PDF..." : "Download AI Result"}
+            </button>
           </div>
         </CardContent>
       </Card>
