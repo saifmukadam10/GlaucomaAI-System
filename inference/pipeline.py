@@ -30,6 +30,7 @@ def run_pipeline(image):
     features = build_feature_vector(deep_features, cdr, vessel_risk)
 
     prediction = models.xgb.predict(features)
+    print(prediction)
     #print("disc" + disc_box)
     #print("cup" + cup_box)
     return {

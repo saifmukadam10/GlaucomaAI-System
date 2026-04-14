@@ -245,6 +245,32 @@ export const ResultsCard = ({
       const statusText = isGlaucoma ? [153, 27, 27] : [22, 101, 52];
       const statusBorder = isGlaucoma ? [239, 68, 68] : [34, 197, 94];
 
+      const ptToMm = (pt: number) => pt * 0.3527777778;
+
+      const addBanner = (text: string, opts: { fontSize: number; fontStyle?: "normal" | "bold" }) => {
+        const fontSize = opts.fontSize;
+        const fontStyle = opts.fontStyle ?? "normal";
+        const padX = 3;
+        const padY = 2.2;
+        const lineHeight = ptToMm(fontSize) * 1.25;
+
+        doc.setFont("helvetica", fontStyle);
+        doc.setFontSize(fontSize);
+        const lines = doc.splitTextToSize(text, contentWidth - padX * 2);
+        const boxH = lines.length * lineHeight + padY * 2;
+
+        ensureSpace(boxH + 2);
+        doc.setFillColor(statusFill[0], statusFill[1], statusFill[2]);
+        doc.setDrawColor(statusBorder[0], statusBorder[1], statusBorder[2]);
+        doc.roundedRect(margin, y, contentWidth, boxH, 2, 2, "FD");
+
+        doc.setTextColor(statusText[0], statusText[1], statusText[2]);
+        // jsPDF text coordinates are baseline-based by default; use top baseline to avoid glyph clipping.
+        (doc as any).text(lines, margin + padX, y + padY, { baseline: "top" });
+
+        y += boxH + 3;
+      };
+
       doc.setFillColor(15, 23, 42);
       doc.roundedRect(margin, y, contentWidth, 16, 3, 3, "F");
       doc.setTextColor(255, 255, 255);
@@ -257,17 +283,7 @@ export const ResultsCard = ({
       doc.text("Automated screening summary and visual evidence", margin + 4, y + 12.5);
       y += 22;
 
-      ensureSpace(11);
-      doc.setFillColor(statusFill[0], statusFill[1], statusFill[2]);
-      doc.setDrawColor(statusBorder[0], statusBorder[1], statusBorder[2]);
-      doc.roundedRect(margin, y - 1.5, contentWidth, 9, 2, 2, "FD");
-      addWrapped(`Diagnosis: ${status}`, {
-        fontSize: 12,
-        spacing: 5.2,
-        color: [statusText[0], statusText[1], statusText[2]],
-        fontStyle: "bold",
-      });
-      y += 1;
+      addBanner(`Diagnosis: ${status}`, { fontSize: 12, fontStyle: "bold" });
 
       addWrapped(`File: ${filename}`, { fontSize: 11, spacing: 5, color: [55, 65, 81] });
       addWrapped(`CDR (Cup-to-Disc Ratio): ${cdr.toFixed(2)} (${cdrInfo.text})`, {

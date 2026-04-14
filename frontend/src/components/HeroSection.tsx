@@ -242,18 +242,18 @@ export const HeroSection = () => {
       )}
 
       {/* Glaucoma Q&A Section (always visible on homepage) */}
-      <section className="max-w-5xl mx-auto bg-gray-900/60 border border-gray-800 rounded-2xl p-6 md:p-8 mt-10">
+      <section className="w-full mx-auto bg-sky-950/80 border border-primary/60 rounded-2xl p-6 md:p-8 mt-10">
         <h3 className="text-2xl font-semibold text-white mb-2">
           Ask a Glaucoma Question
         </h3>
-        <p className="text-base text-gray-300 mb-5 leading-relaxed">
+        <p className="text-base text-sky-100 mb-5 leading-relaxed">
           This assistant is specialized only in{" "}
           <span className="font-semibold text-primary">glaucoma-related</span> questions
           (risk factors, optic nerve, CDR, treatment options, follow-up, etc.). It does not
           replace consultation with an ophthalmologist.
         </p>
 
-        <div className="rounded-xl border border-gray-800 bg-gray-950/50 p-4 md:p-5 mb-5 max-h-[520px] overflow-y-auto space-y-4">
+        <div className="rounded-xl border border-primary/40 bg-black/70 p-4 md:p-5 mb-5 max-h-[520px] overflow-y-auto space-y-4">
           {chatHistory.length === 0 ? (
             <p className="text-base text-gray-400">
               Ask your first glaucoma question below.
@@ -261,15 +261,15 @@ export const HeroSection = () => {
           ) : (
             chatHistory.map((item, index) => (
               <div key={`${item.question}-${index}`} className="space-y-2">
-                <div className="rounded-lg bg-gray-900 border border-gray-800 p-3">
-                  <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">Prompt</p>
-                  <p className="text-base text-gray-100 whitespace-pre-line">{item.question}</p>
+                <div className="rounded-lg bg-sky-900/70 border border-sky-500/80 p-3">
+                  <p className="text-xs uppercase tracking-wide text-sky-200 mb-1">Prompt</p>
+                  <p className="text-base text-sky-50 whitespace-pre-line">{item.question}</p>
                 </div>
-                <div className="rounded-lg bg-black/30 border border-primary/30 p-3">
-                  <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">
+                <div className="rounded-lg bg-primary/25 border border-primary/80 p-3">
+                  <p className="text-xs uppercase tracking-wide text-primary-foreground mb-1">
                     LLM Response
                   </p>
-                  <p className="text-base text-gray-100 whitespace-pre-line">{item.answer}</p>
+                  <p className="text-base text-white whitespace-pre-line">{item.answer}</p>
                 </div>
               </div>
             ))
@@ -288,9 +288,9 @@ export const HeroSection = () => {
             <button
               onClick={handleAskQuestion}
               disabled={asking || !question.trim()}
-              className={`px-5 py-2 rounded-lg text-base font-semibold ${
+              className={`px-5 py-2 rounded-lg text-base font-semibold shadow-medical ${
                 asking || !question.trim()
-                  ? "bg-gray-700 text-gray-400 cursor-not-allowed"
+                  ? "bg-slate-700 text-slate-300 cursor-not-allowed"
                   : "bg-primary text-white hover:bg-primary/90"
               }`}
             >
