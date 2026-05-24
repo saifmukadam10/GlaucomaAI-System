@@ -8,6 +8,7 @@ class Settings:
     MODEL_DIR = os.path.join(BASE_DIR, "models", "weights")
 
     RESNET_PATH = os.path.join(MODEL_DIR, "resnet_feature_extractor.pth")
+    RESNET_GRADCAM_PATH = os.path.join(MODEL_DIR, "best_resnet_model.pth")
     RCNN_PATH = os.path.join(MODEL_DIR, "mask_cnn_refuge2.pth")
     UNET_PATH = os.path.join(MODEL_DIR, "unet_vessel_segmentation.pth")
     XGB_PATH = os.path.join(MODEL_DIR, "xgboost_model.pkl")

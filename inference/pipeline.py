@@ -29,11 +29,18 @@ def run_pipeline(image):
 
     features = build_feature_vector(deep_features, cdr, vessel_risk)
 
-    prediction = models.xgb.predict(features)
-    print(prediction)
+    prediction = models.xgb.predict_proba(features)[0][1]
     #print("disc" + disc_box)
     #print("cup" + cup_box)
+    if prediction < 0.35:
+        risk = "Low Risk"
+    elif prediction < 0.65:
+        risk = "Medium Risk"
+    else:
+        risk = "High Risk"
     return {
+        "glaucoma_probability": float(prediction),
+        "risk_level": risk,
         "prediction": prediction.tolist(),
         "cdr": float(cdr),
         "vessel_risk": float(vessel_risk),

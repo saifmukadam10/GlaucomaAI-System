@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from "react";
 import heroImage from "@/assets/hero-eye-examination.jpg";
 import { ResultsCard } from "./ResultsCard";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
+
 export const HeroSection = () => {
   const [dragActive, setDragActive] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -60,7 +62,7 @@ export const HeroSection = () => {
     formData.append("file", selectedFile);
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/predict", {
+      const res = await fetch(`${API_BASE_URL}/predict`, {
         method: "POST",
         body: formData,
       });
@@ -81,7 +83,7 @@ export const HeroSection = () => {
     setAsking(true);
     setAskError(null);
     try {
-      const res = await fetch("http://127.0.0.1:8000/ask", {
+      const res = await fetch(`${API_BASE_URL}/ask`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

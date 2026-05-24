@@ -1,69 +1,109 @@
-import ollama
+"""
+Drop-in LLM service for deployment.
+
+The rest of the app still imports ask_llm from this module, but the local
+Ollama dependency has been replaced with xAI's Grok API.
+"""
+
+import os
+import requests
 
 
-SYSTEM_PROMPT = (
-    "You are a medical assistant specialized ONLY in glaucoma. "
-    "You answer questions strictly related to glaucoma, optic nerve health, "
-    "intraocular pressure, visual field loss, risk factors, diagnosis, and treatment of glaucoma. "
-    "If the user asks about anything outside glaucoma or eye health, politely refuse "
-    "and tell them your scope is limited to glaucoma-related information only. "
-    "Always remind users that this is not a medical diagnosis and they must consult "
-    "an ophthalmologist for medical decisions."
+XAI_API_URL = os.environ.get(
+    "XAI_API_URL",
+    "https://api.x.ai/v1/chat/completions",
 )
+XAI_MODEL = os.environ.get("XAI_MODEL", "grok-4.3")
+MAX_TOKENS = int(os.environ.get("XAI_MAX_TOKENS", "600"))
+
+SYSTEM_PROMPT = """You are GlaucomaAI, a careful educational assistant focused on glaucoma and ocular health.
+Answer questions about glaucoma risk factors, symptoms, cup-to-disc ratio, optic nerve health, IOP,
+screening, treatment options, and follow-up care. If the question is unrelated to eye health, politely
+redirect. Do not diagnose, and always remind users to consult a qualified ophthalmologist."""
 
 OUT_OF_SCOPE_REPLY = (
-    "This is not a relevant question. I can only answer eye and glaucoma-related questions."
+    "I'm specialized in glaucoma and ocular-health questions. Please ask about topics like "
+    "glaucoma symptoms, cup-to-disc ratio, eye pressure, optic nerve health, screening results, "
+    "or treatment options."
 )
 
-# Keyword gate to block unrelated prompts before they reach the model.
-# Add more keyword or change the approach :()
 EYE_GLAUCOMA_KEYWORDS = {
-    "eye",
-    "eyes",
-    "glaucoma",
-    "optic",
-    "nerve",
-    "retina",
-    "retinal",
-    "fundus",
-    "vision",
-    "visual",
-    "field",
-    "intraocular",
-    "pressure",
-    "iop",
-    "cdr",
-    "cup",
-    "disc",
-    "ophthalmology",
-    "ophthalmologist",
-    "ocular",
-    "blindness",
-    "tonometry",
-    "gonioscopy",
+    "glaucoma", "glaucomatous", "iop", "intraocular", "pressure", "cdr",
+    "cup", "disc", "cupping", "optic", "nerve", "rnfl", "retinal",
+    "retina", "eye", "eyes", "ocular", "vision", "visual", "field",
+    "blindness", "blind", "blur", "blurry", "halos", "tunnel",
+    "peripheral", "fundus", "oct", "tonometry", "ophthalmology",
+    "ophthalmologist", "optometrist", "latanoprost", "timolol",
+    "brimonidine", "dorzolamide", "acetazolamide", "trabeculectomy",
+    "slt", "laser", "migs", "cataract", "screening", "heatmap",
+    "gradcam", "diagnosis", "treatment", "medication", "follow-up",
+}
+
+PHRASE_MATCHES = {
+    "optic nerve", "visual field", "cup to disc", "cup-to-disc",
+    "eye pressure", "intraocular pressure", "ocular hypertension",
+    "open angle", "angle closure", "normal tension", "eye drop",
+    "eye drops", "eye exam", "eye test", "my eye", "my eyes",
 }
 
 
 def _is_eye_or_glaucoma_related(question: str) -> bool:
-    normalized = "".join(ch.lower() if ch.isalnum() else " " for ch in question)
-    tokens = {token for token in normalized.split() if token}
+    normalized = question.lower()
+    if len(normalized.split()) <= 4:
+        return True
+
+    if any(phrase in normalized for phrase in PHRASE_MATCHES):
+        return True
+
+    tokens = {token.strip(".,?!:;()[]{}\"'").lower() for token in normalized.split()}
     return bool(tokens & EYE_GLAUCOMA_KEYWORDS)
 
 
-def ask_llm(question: str) -> str:
-    """
-    Ask the Ollama LLM a question, constrained to glaucoma-related topics.
-    """
+def ask_llm(question: str, conversation_history: list | None = None) -> str:
+    """Ask xAI Grok a glaucoma-related question."""
     if not _is_eye_or_glaucoma_related(question):
         return OUT_OF_SCOPE_REPLY
 
-    response = ollama.chat(
-        model="tinyllama",
-        #model="llama3",
-        messages=[
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": question},
-        ],
-    )
+    api_key = os.environ.get("XAI_API_KEY", "")
+    if not api_key:
+        return (
+            "LLM service is not configured. Set the XAI_API_KEY environment variable "
+            "in your deployment secrets."
+        )
 
-    return response["message"]["content"]
+    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+    if conversation_history:
+        messages.extend(conversation_history)
+    messages.append({"role": "user", "content": question})
+
+    payload = {
+        "model": XAI_MODEL,
+        "messages": messages,
+        "max_tokens": MAX_TOKENS,
+        "stream": False,
+    }
+
+    try:
+        response = requests.post(
+            XAI_API_URL,
+            json=payload,
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
+            timeout=60,
+        )
+        response.raise_for_status()
+        data = response.json()
+        answer = data["choices"][0]["message"]["content"].strip()
+        return (
+            f"{answer}\n\n"
+            "This information is educational only. Please consult a qualified ophthalmologist "
+            "for diagnosis and treatment decisions."
+        )
+    except requests.exceptions.Timeout:
+        return "The Grok service timed out. Please try again."
+    except requests.exceptions.HTTPError:
+        return f"Grok API error ({response.status_code}): {response.text[:200]}"
+    except Exception as exc:
+        return f"Unexpected error contacting Grok: {exc}"

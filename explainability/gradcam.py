@@ -6,7 +6,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from models.feature_extractor import load_resnet
+from models.feature_extractor_gradcam import load_resnet_gradcam
 from utils.preprocessing import load_image, preprocess_for_resnet
 
 _MODEL = None
@@ -20,7 +20,7 @@ def _get_model():
         return _MODEL
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    extractor = load_resnet()
+    extractor = load_resnet_gradcam()  # ✅ was load_resnet()
     backbone = extractor.model.to(device).eval()
 
     _MODEL = backbone

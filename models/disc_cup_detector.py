@@ -10,7 +10,11 @@ class DiscCupDetector:
     def __init__(self, model_path, score_threshold=0.5):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.score_threshold = score_threshold
-        self.model = maskrcnn_resnet50_fpn(num_classes=3)
+        self.model = maskrcnn_resnet50_fpn(
+            num_classes=3,
+            weights=None,
+            weights_backbone=None,
+        )
         state_dict = torch.load(model_path, map_location=self.device)
         self.model.load_state_dict(state_dict)
         self.model.to(self.device)

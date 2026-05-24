@@ -9,6 +9,8 @@ datasets/
 *.pth
 *.pt
 *.pkl
+!models/weights/*.pth
+!models/weights/*.pkl
 
 # Python cache
 __pycache__/
