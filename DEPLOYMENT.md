@@ -5,11 +5,11 @@ serves the React UI and FastAPI backend from one public URL.
 
 ## 1. Prepare secrets
 
-Create an xAI API key and add it to your Space secrets:
+Create a Groq API key and add it to your Space secrets:
 
 ```text
-XAI_API_KEY=your_xai_api_key
-XAI_MODEL=grok-4.3
+GROQ_API_KEY=your_groq_api_key
+GROQ_MODEL=llama-3.1-8b-instant
 ```
 
 Do not put API keys in React files or commit them to GitHub.
@@ -79,5 +79,5 @@ Use the Space URL:
 ```text
 Glaucoma Detection and Monitoring System
 Live Demo: https://huggingface.co/spaces/<your-user>/<your-space>
-Tech: React, FastAPI, PyTorch, XGBoost, xAI Grok, Docker
+Tech: React, FastAPI, PyTorch, XGBoost, Groq LLM API, Docker
 ```

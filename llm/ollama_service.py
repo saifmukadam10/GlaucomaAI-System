@@ -2,19 +2,19 @@
 Drop-in LLM service for deployment.
 
 The rest of the app still imports ask_llm from this module, but the local
-Ollama dependency has been replaced with xAI's Grok API.
+Ollama dependency has been replaced with Groq's hosted OpenAI-compatible API.
 """
 
 import os
 import requests
 
 
-XAI_API_URL = os.environ.get(
-    "XAI_API_URL",
-    "https://api.x.ai/v1/chat/completions",
+GROQ_API_URL = os.environ.get(
+    "GROQ_API_URL",
+    "https://api.groq.com/openai/v1/chat/completions",
 )
-XAI_MODEL = os.environ.get("XAI_MODEL", "grok-4.3")
-MAX_TOKENS = int(os.environ.get("XAI_MAX_TOKENS", "600"))
+GROQ_MODEL = os.environ.get("GROQ_MODEL", "llama-3.1-8b-instant")
+MAX_TOKENS = int(os.environ.get("GROQ_MAX_TOKENS", "600"))
 
 SYSTEM_PROMPT = """You are GlaucomaAI, a careful educational assistant focused on glaucoma and ocular health.
 Answer questions about glaucoma risk factors, symptoms, cup-to-disc ratio, optic nerve health, IOP,
@@ -60,14 +60,14 @@ def _is_eye_or_glaucoma_related(question: str) -> bool:
 
 
 def ask_llm(question: str, conversation_history: list | None = None) -> str:
-    """Ask xAI Grok a glaucoma-related question."""
+    """Ask Groq's hosted LLM a glaucoma-related question."""
     if not _is_eye_or_glaucoma_related(question):
         return OUT_OF_SCOPE_REPLY
 
-    api_key = os.environ.get("XAI_API_KEY", "")
+    api_key = os.environ.get("GROQ_API_KEY", "")
     if not api_key:
         return (
-            "LLM service is not configured. Set the XAI_API_KEY environment variable "
+            "LLM service is not configured. Set the GROQ_API_KEY environment variable "
             "in your deployment secrets."
         )
 
@@ -77,7 +77,7 @@ def ask_llm(question: str, conversation_history: list | None = None) -> str:
     messages.append({"role": "user", "content": question})
 
     payload = {
-        "model": XAI_MODEL,
+        "model": GROQ_MODEL,
         "messages": messages,
         "max_tokens": MAX_TOKENS,
         "stream": False,
@@ -85,7 +85,7 @@ def ask_llm(question: str, conversation_history: list | None = None) -> str:
 
     try:
         response = requests.post(
-            XAI_API_URL,
+            GROQ_API_URL,
             json=payload,
             headers={
                 "Authorization": f"Bearer {api_key}",
@@ -102,8 +102,8 @@ def ask_llm(question: str, conversation_history: list | None = None) -> str:
             "for diagnosis and treatment decisions."
         )
     except requests.exceptions.Timeout:
-        return "The Grok service timed out. Please try again."
+        return "The LLM service timed out. Please try again."
     except requests.exceptions.HTTPError:
-        return f"Grok API error ({response.status_code}): {response.text[:200]}"
+        return f"Groq API error ({response.status_code}): {response.text[:200]}"
     except Exception as exc:
-        return f"Unexpected error contacting Grok: {exc}"
+        return f"Unexpected error contacting Groq: {exc}"
