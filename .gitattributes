@@ -1,0 +1,2 @@
+models/weights/*.pth filter=lfs diff=lfs merge=lfs -text
+models/weights/*.pkl filter=lfs diff=lfs merge=lfs -text

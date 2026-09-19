@@ -1,13 +1,19 @@
+import os
+
 class Settings:
 
-    MODEL_DIR = "models/weights"
+    # Base directory of project (GlaucomaAI-System)
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-    RESNET_PATH = r"C:\Users\Saif\glaucoma-ai-system\models\weights\resnet_feature_extractor.pth"
-    RCNN_PATH = r"C:\Users\Saif\glaucoma-ai-system\models\weights\rcnn_detector.pth"
-    UNET_PATH = r"C:\Users\Saif\glaucoma-ai-system\models\weights\unet_vessel_segmentation.pth"
-    XGB_PATH = r"C:\Users\Saif\glaucoma-ai-system\models\weights\xgboost_model.pkl"
+    MODEL_DIR = os.path.join(BASE_DIR, "models", "weights")
 
-    PATIENT_DB = "data/patient_records.json"
+    RESNET_PATH = os.path.join(MODEL_DIR, "resnet_feature_extractor.pth")
+    RESNET_GRADCAM_PATH = os.path.join(MODEL_DIR, "best_resnet_model.pth")
+    RCNN_PATH = os.path.join(MODEL_DIR, "mask_cnn_refuge2.pth")
+    UNET_PATH = os.path.join(MODEL_DIR, "unet_vessel_segmentation.pth")
+    XGB_PATH = os.path.join(MODEL_DIR, "xgboost_model.pkl")
+
+    PATIENT_DB = os.path.join(BASE_DIR, "data", "patient_records.json")
 
     IMAGE_SIZE = 224
 

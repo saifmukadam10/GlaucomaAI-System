@@ -1,0 +1,87 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Inter:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* GlaucoScan Medical AI Design System */
+
+@layer base {
+  :root {
+    /* Medical Professional Color Palette */
+    --background: 158 35% 7%;  /* #102320 - Deep medical green */
+    --foreground: 0 0% 100%;   /* White for high contrast readability */
+
+    --card: 158 28% 14%;       /* #18342f - Medical card background */
+    --card-foreground: 0 0% 100%;
+
+    --popover: 158 28% 14%;
+    --popover-foreground: 0 0% 100%;
+
+    --primary: 172 75% 41%;    /* #0bdab7 - Medical teal accent */
+    --primary-foreground: 158 35% 7%;
+
+    --secondary: 158 23% 20%;  /* #224942 - Secondary medical green */
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 160 20% 60%;     /* #90cbc1 - Muted medical green */
+    --muted-foreground: 158 35% 7%;
+
+    --accent: 172 75% 41%;    /* #0bdab7 - Accent teal */
+    --accent-foreground: 158 35% 7%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 158 33% 25%;    /* #31685f - Medical border */
+    --input: 158 28% 14%;     /* Card background for inputs */
+    --ring: 172 75% 41%;      /* Focus ring in accent color */
+
+    --radius: 0.75rem;        /* Medical UI rounded corners */
+
+    /* Medical Gradients */
+    --gradient-medical: linear-gradient(135deg, hsl(158 35% 7%), hsl(158 28% 14%));
+    --gradient-accent: linear-gradient(135deg, hsl(172 75% 41%), hsl(172 75% 51%));
+    --gradient-subtle: linear-gradient(180deg, hsl(158 28% 14%), hsl(158 35% 7%));
+
+    /* Medical Shadows */
+    --shadow-medical: 0 4px 20px hsl(158 35% 4% / 0.3);
+    --shadow-accent: 0 0 30px hsl(172 75% 41% / 0.2);
+    
+    /* Transitions */
+    --transition-medical: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .dark {
+    /* Keep same colors for consistency - this is a medical dark theme */
+    --background: 158 35% 7%;
+    --foreground: 0 0% 100%;
+    --card: 158 28% 14%;
+    --card-foreground: 0 0% 100%;
+    --popover: 158 28% 14%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 172 75% 41%;
+    --primary-foreground: 158 35% 7%;
+    --secondary: 158 23% 20%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 160 20% 60%;
+    --muted-foreground: 158 35% 7%;
+    --accent: 172 75% 41%;
+    --accent-foreground: 158 35% 7%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 158 33% 25%;
+    --input: 158 28% 14%;
+    --ring: 172 75% 41%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}

@@ -105,7 +105,10 @@ def preprocess_for_unet(image_input):
     # Add batch
     processed = np.expand_dims(processed, axis=0)
 
-    return processed.astype(np.float32)
+     # 🔥 FIX: convert to torch tensor
+    processed = torch.tensor(processed, dtype=torch.float32)
+    
+    return processed
 
 
 # =========================
