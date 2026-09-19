@@ -13,7 +13,16 @@ GROQ_API_URL = os.environ.get(
     "GROQ_API_URL",
     "https://api.groq.com/openai/v1/chat/completions",
 )
-GROQ_MODEL = os.environ.get("GROQ_MODEL", "llama-3.1-8b-instant")
+DEFAULT_GROQ_MODEL = "openai/gpt-oss-20b"
+GROQ_MODEL = os.environ.get("GROQ_MODEL", DEFAULT_GROQ_MODEL)
+GROQ_FALLBACK_MODELS = [
+    model.strip()
+    for model in os.environ.get(
+        "GROQ_FALLBACK_MODELS",
+        "openai/gpt-oss-20b,llama-3.3-70b-versatile",
+    ).split(",")
+    if model.strip()
+]
 MAX_TOKENS = int(os.environ.get("GROQ_MAX_TOKENS", "600"))
 
 SYSTEM_PROMPT = """You are GlaucomaAI, a careful educational assistant focused on glaucoma and ocular health.
@@ -76,34 +85,43 @@ def ask_llm(question: str, conversation_history: list | None = None) -> str:
         messages.extend(conversation_history)
     messages.append({"role": "user", "content": question})
 
-    payload = {
-        "model": GROQ_MODEL,
-        "messages": messages,
-        "max_tokens": MAX_TOKENS,
-        "stream": False,
-    }
+    candidate_models = list(dict.fromkeys([GROQ_MODEL, *GROQ_FALLBACK_MODELS]))
+    last_model_error = ""
 
-    try:
-        response = requests.post(
-            GROQ_API_URL,
-            json=payload,
-            headers={
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json",
-            },
-            timeout=60,
-        )
-        response.raise_for_status()
-        data = response.json()
-        answer = data["choices"][0]["message"]["content"].strip()
-        return (
-            f"{answer}\n\n"
-            "This information is educational only. Please consult a qualified ophthalmologist "
-            "for diagnosis and treatment decisions."
-        )
-    except requests.exceptions.Timeout:
-        return "The LLM service timed out. Please try again."
-    except requests.exceptions.HTTPError:
-        return f"Groq API error ({response.status_code}): {response.text[:200]}"
-    except Exception as exc:
-        return f"Unexpected error contacting Groq: {exc}"
+    for model in candidate_models:
+        payload = {
+            "model": model,
+            "messages": messages,
+            "max_tokens": MAX_TOKENS,
+            "stream": False,
+        }
+
+        try:
+            response = requests.post(
+                GROQ_API_URL,
+                json=payload,
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json",
+                },
+                timeout=60,
+            )
+            response.raise_for_status()
+            data = response.json()
+            answer = data["choices"][0]["message"]["content"].strip()
+            return (
+                f"{answer}\n\n"
+                "This information is educational only. Please consult a qualified ophthalmologist "
+                "for diagnosis and treatment decisions."
+            )
+        except requests.exceptions.Timeout:
+            return "The LLM service timed out. Please try again."
+        except requests.exceptions.HTTPError:
+            last_model_error = f"Groq API error ({response.status_code}): {response.text[:200]}"
+            if response.status_code in {400, 404} and "model" in response.text.lower():
+                continue
+            return last_model_error
+        except Exception as exc:
+            return f"Unexpected error contacting Groq: {exc}"
+
+    return last_model_error or "No configured Groq model is available for this account."

@@ -9,7 +9,7 @@ Create a Groq API key and add it to your Space secrets:
 
 ```text
 GROQ_API_KEY=your_groq_api_key
-GROQ_MODEL=llama-3.1-8b-instant
+GROQ_MODEL=openai/gpt-oss-20b
 ```
 
 Do not put API keys in React files or commit them to GitHub.
