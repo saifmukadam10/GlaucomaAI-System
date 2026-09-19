@@ -8,6 +8,7 @@ app_port: 7860
 pinned: false
 ---
 
+Please Open the README.md file to have a formatted view of this Production Level Project
 glaucoma-ai-system/
 
 │
